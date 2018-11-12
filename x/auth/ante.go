@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -256,6 +257,25 @@ func adjustFeesByGas(fees sdk.Coins, gas int64) sdk.Coins {
 	return fees.Plus(gasFees)
 }
 
+func calcuteTaxesByAmount(msgs []sdk.Msg) sdk.Coins {
+	taxes := ([]sdk.Coin)(nil)
+	terraTotal := sdk.ZeroInt()
+
+	for _, msg := range msgs {
+		if msgSend, ok := msg.(bank.MsgSend); ok {
+			for i := 0; i < len(msgSend.Inputs); i++ {
+				terraAmount := msgSend.Inputs[i].Coins.AmountOf("terra")
+				terraTotal.Add(terraAmount)
+			}
+		}
+	}
+
+	taxes = append(taxes, sdk.Coin{
+		Denom: "terra", Amount: terraTotal.MulRaw(100).DivRaw(10),
+	})
+	return taxes
+}
+
 // Deduct the fee from the account.
 // We could use the CoinKeeper (in addition to the AccountKeeper,
 // because the CoinKeeper doesn't give us accounts), but it seems easier to do this.
@@ -288,6 +308,14 @@ func ensureSufficientMempoolFees(ctx sdk.Context, stdTx StdTx) sdk.Result {
 		return sdk.ErrInsufficientFee(fmt.Sprintf(
 			"insufficient fee, got: %q required: %q", stdTx.Fee.Amount, requiredFees)).Result()
 	}
+
+	requiredTaxes := calcuteTaxesByAmount(stdTx.Msgs)
+	if !stdTx.Fee.Amount.IsAllGTE(requiredTaxes) {
+		// validators reject any tx from the mempool with less than the minimum fee per gas * gas factor
+		return sdk.ErrInsufficientFee(fmt.Sprintf(
+			"insufficient tax, got: %q required: %q", stdTx.Fee.Amount, requiredTaxes)).Result()
+	}
+
 	return sdk.Result{}
 }
 

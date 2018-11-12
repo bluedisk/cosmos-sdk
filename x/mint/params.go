@@ -13,16 +13,18 @@ type Params struct {
 	InflationMax        sdk.Dec `json:"inflation_max"`         // maximum inflation rate
 	InflationMin        sdk.Dec `json:"inflation_min"`         // minimum inflation rate
 	GoalBonded          sdk.Dec `json:"goal_bonded"`           // goal of percent bonded atoms
+	TaxRate				sdk.Dec `json:"tax_rate"`			   // tax rate
 }
 
 // default minting module parameters
 func DefaultParams() Params {
 	return Params{
-		MintDenom:           "steak",
+		MintDenom:           "luna",
 		InflationRateChange: sdk.NewDecWithPrec(13, 2),
 		InflationMax:        sdk.NewDecWithPrec(20, 2),
 		InflationMin:        sdk.NewDecWithPrec(7, 2),
 		GoalBonded:          sdk.NewDecWithPrec(67, 2),
+		TaxRate:             sdk.NewDecWithPrec(0, 2),
 	}
 }
 
@@ -38,6 +40,9 @@ func validateParams(params Params) error {
 	}
 	if params.MintDenom == "" {
 		return fmt.Errorf("mint parameter MintDenom can't be an empty string")
+	}
+	if params.TaxRate.LT(sdk.ZeroDec()) {
+		return fmt.Errorf("mint parameter TaxRate should be positive, is %s ", params.TaxRate.String())
 	}
 	return nil
 }
