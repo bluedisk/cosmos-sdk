@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/cosmos/cosmos-sdk/x/tax"
 	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
@@ -28,13 +29,15 @@ func NewApp3(logger log.Logger, db dbm.DB) *bapp.BaseApp {
 	// Create a key for accessing the account store.
 	keyAccount := sdk.NewKVStoreKey("acc")
 	keyFees := sdk.NewKVStoreKey("fee") // TODO
+	keyTax := sdk.NewKVStoreKey("tax")
 
 	// Set various mappers/keepers to interact easily with underlying stores
 	accountKeeper := auth.NewAccountKeeper(cdc, keyAccount, auth.ProtoBaseAccount)
 	bankKeeper := bank.NewBaseKeeper(accountKeeper)
 	feeKeeper := auth.NewFeeCollectionKeeper(cdc, keyFees)
+	taxKeeper := tax.NewTaxKeeper(cdc, keyTax)
 
-	app.SetAnteHandler(auth.NewAnteHandler(accountKeeper, feeKeeper))
+	app.SetAnteHandler(auth.NewAnteHandler(accountKeeper, feeKeeper, taxKeeper))
 
 	// Register message routes.
 	// Note the handler gets access to

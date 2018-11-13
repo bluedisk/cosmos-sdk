@@ -43,7 +43,7 @@ func DefaultGenesisState() GenesisState {
 	return GenesisState{
 		StartingProposalID: 1,
 		DepositParams: DepositParams{
-			MinDeposit:       sdk.Coins{sdk.NewInt64Coin("steak", 10)},
+			MinDeposit:       sdk.Coins{sdk.NewInt64Coin("luna", 10)},
 			MaxDepositPeriod: time.Duration(172800) * time.Second,
 		},
 		VotingParams: VotingParams{

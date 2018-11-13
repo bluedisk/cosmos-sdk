@@ -48,7 +48,7 @@ func SupplyInvariants(ck bank.Keeper, k stake.Keeper,
 		loose := sdk.ZeroDec()
 		bonded := sdk.ZeroDec()
 		am.IterateAccounts(ctx, func(acc auth.Account) bool {
-			loose = loose.Add(sdk.NewDecFromInt(acc.GetCoins().AmountOf("steak")))
+			loose = loose.Add(sdk.NewDecFromInt(acc.GetCoins().AmountOf("luna")))
 			return false
 		})
 		k.IterateUnbondingDelegations(ctx, func(_ int64, ubd stake.UnbondingDelegation) bool {
@@ -70,19 +70,19 @@ func SupplyInvariants(ck bank.Keeper, k stake.Keeper,
 		feePool := d.GetFeePool(ctx)
 
 		// add outstanding fees
-		loose = loose.Add(sdk.NewDecFromInt(f.GetCollectedFees(ctx).AmountOf("steak")))
+		loose = loose.Add(sdk.NewDecFromInt(f.GetCollectedFees(ctx).AmountOf("luna")))
 
 		// add community pool
-		loose = loose.Add(feePool.CommunityPool.AmountOf("steak"))
+		loose = loose.Add(feePool.CommunityPool.AmountOf("luna"))
 
 		// add validator distribution pool
-		loose = loose.Add(feePool.ValPool.AmountOf("steak"))
+		loose = loose.Add(feePool.ValPool.AmountOf("luna"))
 
 		// add validator distribution commission and yet-to-be-withdrawn-by-delegators
 		d.IterateValidatorDistInfos(ctx,
 			func(_ int64, distInfo distribution.ValidatorDistInfo) (stop bool) {
-				loose = loose.Add(distInfo.DelPool.AmountOf("steak"))
-				loose = loose.Add(distInfo.ValCommission.AmountOf("steak"))
+				loose = loose.Add(distInfo.DelPool.AmountOf("luna"))
+				loose = loose.Add(distInfo.ValCommission.AmountOf("luna"))
 				return false
 			},
 		)

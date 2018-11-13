@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"github.com/cosmos/cosmos-sdk/x/tax"
 	"os"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
@@ -44,6 +45,7 @@ type BasecoinApp struct {
 	// manage getting and setting accounts
 	accountKeeper       auth.AccountKeeper
 	feeCollectionKeeper auth.FeeCollectionKeeper
+	taxKeeper			tax.Keeper
 	bankKeeper          bank.Keeper
 	ibcMapper           ibc.Mapper
 }
@@ -86,7 +88,7 @@ func NewBasecoinApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
-	app.SetAnteHandler(auth.NewAnteHandler(app.accountKeeper, app.feeCollectionKeeper))
+	app.SetAnteHandler(auth.NewAnteHandler(app.accountKeeper, app.feeCollectionKeeper, app.taxKeeper))
 
 	// mount the multistore and load the latest state
 	app.MountStoresIAVL(app.keyMain, app.keyAccount, app.keyIBC)

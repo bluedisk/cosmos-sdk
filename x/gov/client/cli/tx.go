@@ -56,7 +56,7 @@ func GetCmdSubmitProposal(cdc *codec.Codec) *cobra.Command {
 		Long: strings.TrimSpace(`
 Submit a proposal along with an initial deposit. Proposal title, description, type and deposit can be given directly or through a proposal JSON file. For example:
 
-$ gaiacli gov submit-proposal --proposal="path/to/proposal.json"
+$ terracli gov submit-proposal --proposal="path/to/proposal.json"
 
 where proposal.json contains:
 
@@ -69,7 +69,7 @@ where proposal.json contains:
 
 is equivalent to
 
-$ gaiacli gov submit-proposal --title="Test Proposal" --description="My awesome proposal" --type="Text" --deposit="1000test"
+$ terracli gov submit-proposal --title="Test Proposal" --description="My awesome proposal" --type="Text" --deposit="1000test"
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			proposal, err := parseSubmitProposalFlags()

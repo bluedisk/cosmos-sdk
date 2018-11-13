@@ -9,7 +9,7 @@ instances:
   search_string: ['gaiad']
   thresholds:
     critical: [1, 1]
-- name: gaiacli
-  search_string: ['gaiacli']
+- name: terracli
+  search_string: ['terracli']
   thresholds:
     critical: [1, 1]

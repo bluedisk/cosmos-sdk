@@ -2,6 +2,7 @@ package bank
 
 import (
 	"encoding/json"
+	"github.com/cosmos/cosmos-sdk/x/auth"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -13,6 +14,18 @@ type MsgSend struct {
 }
 
 var _ sdk.Msg = MsgSend{}
+var _ auth.Taxable = MsgSend{}
+
+// Implements auth.Taxable
+func (msg MsgSend) GetTaxBasis() sdk.Coins {
+	taxBasis := sdk.Coins{}
+
+	for _, input := range msg.Inputs {
+		taxBasis.Plus(input.Coins)
+	}
+
+	return taxBasis
+}
 
 // NewMsgSend - construct arbitrary multi-in, multi-out send msg.
 func NewMsgSend(in []Input, out []Output) MsgSend {

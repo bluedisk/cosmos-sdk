@@ -30,7 +30,7 @@ Don't use more `steak` thank you have! You can always get more by using the [Fau
 
 ```bash
 gaiacli tx create-validator \
-  --amount=5steak \
+  --amount=5luna \
   --pubkey=$(gaiad tendermint show-validator) \
   --moniker="choose a moniker" \
   --chain-id=<chain_id> \

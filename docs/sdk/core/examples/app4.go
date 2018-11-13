@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/cosmos/cosmos-sdk/x/tax"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
@@ -33,9 +34,11 @@ func NewApp4(logger log.Logger, db dbm.DB) *bapp.BaseApp {
 
 	// TODO
 	keyFees := sdk.NewKVStoreKey("fee")
+	keyTax := sdk.NewKVStoreKey("tax")
 	feeKeeper := auth.NewFeeCollectionKeeper(cdc, keyFees)
+	taxKeeper := tax.NewTaxKeeper(cdc, keyTax)
 
-	app.SetAnteHandler(auth.NewAnteHandler(accountKeeper, feeKeeper))
+	app.SetAnteHandler(auth.NewAnteHandler(accountKeeper, feeKeeper, taxKeeper))
 
 	// Set InitChainer
 	app.SetInitChainer(NewInitChainer(cdc, accountKeeper))

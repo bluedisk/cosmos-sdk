@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/x/tax"
 	"os"
 	"path"
 
@@ -144,6 +145,7 @@ type GaiaApp struct {
 	stakeKeeper         stake.Keeper
 	slashingKeeper      slashing.Keeper
 	paramsKeeper        params.Keeper
+	taxKeeper        	tax.Keeper
 }
 
 func NewGaiaApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseApp)) *GaiaApp {
@@ -187,7 +189,7 @@ func NewGaiaApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
-	app.SetAnteHandler(auth.NewAnteHandler(app.accountKeeper, app.feeCollectionKeeper))
+	app.SetAnteHandler(auth.NewAnteHandler(app.accountKeeper, app.feeCollectionKeeper, app.taxKeeper))
 	app.MountStoresIAVL(app.keyMain, app.keyAccount, app.keyStake, app.keySlashing, app.keyParams)
 	app.MountStore(app.tkeyParams, sdk.StoreTypeTransient)
 	err := app.LoadLatestVersion(app.keyMain)

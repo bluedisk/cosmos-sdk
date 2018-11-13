@@ -8,5 +8,5 @@
   with_items:
   - /usr/bin/gaiad
   - /home/gaiad/.gaiad
-  - /home/gaiad/.gaiacli
+  - /home/gaiad/.terracli
 

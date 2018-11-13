@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/x/tax"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -39,10 +40,11 @@ type GenesisState struct {
 	GovData      gov.GenesisState      `json:"gov"`
 	SlashingData slashing.GenesisState `json:"slashing"`
 	GenTxs       []json.RawMessage     `json:"gentxs"`
+	TaxData		 tax.GenesisState	   `json:"tax"`
 }
 
 func NewGenesisState(accounts []GenesisAccount, authData auth.GenesisState, stakeData stake.GenesisState, mintData mint.GenesisState,
-	distrData distr.GenesisState, govData gov.GenesisState, slashingData slashing.GenesisState) GenesisState {
+	distrData distr.GenesisState, govData gov.GenesisState, slashingData slashing.GenesisState, taxData tax.GenesisState) GenesisState {
 
 	return GenesisState{
 		Accounts:     accounts,
@@ -52,6 +54,7 @@ func NewGenesisState(accounts []GenesisAccount, authData auth.GenesisState, stak
 		DistrData:    distrData,
 		GovData:      govData,
 		SlashingData: slashingData,
+		TaxData:	  taxData,
 	}
 }
 
@@ -154,6 +157,7 @@ func NewDefaultGenesisState() GenesisState {
 		GovData:      gov.DefaultGenesisState(),
 		SlashingData: slashing.DefaultGenesisState(),
 		GenTxs:       nil,
+		TaxData:	  tax.DefaultGenesisState(),
 	}
 }
 

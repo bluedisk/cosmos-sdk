@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/tax"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -18,12 +18,15 @@ const (
 	maxMemoCharacters           = 100
 	// how much gas = 1 atom
 	gasPerUnitCost = 1000
+
+	// tax rate for terra
+	taxRate = 10 // percent
 )
 
 // NewAnteHandler returns an AnteHandler that checks
 // and increments sequence numbers, checks signatures & account numbers,
 // and deducts fees from the first signer.
-func NewAnteHandler(am AccountKeeper, fck FeeCollectionKeeper) sdk.AnteHandler {
+func NewAnteHandler(am AccountKeeper, fck FeeCollectionKeeper, tk tax.Keeper) sdk.AnteHandler {
 	return func(
 		ctx sdk.Context, tx sdk.Tx, simulate bool,
 	) (newCtx sdk.Context, res sdk.Result, abort bool) {
@@ -37,7 +40,7 @@ func NewAnteHandler(am AccountKeeper, fck FeeCollectionKeeper) sdk.AnteHandler {
 		// Ensure that the provided fees meet a minimum threshold for the validator, if this is a CheckTx.
 		// This is only for local mempool purposes, and thus is only ran on check tx.
 		if ctx.IsCheckTx() && !simulate {
-			res := ensureSufficientMempoolFees(ctx, stdTx)
+			res := ensureSufficientMempoolFees(ctx, stdTx, tk)
 			if !res.IsOK() {
 				return newCtx, res, true
 			}
@@ -257,22 +260,31 @@ func adjustFeesByGas(fees sdk.Coins, gas int64) sdk.Coins {
 	return fees.Plus(gasFees)
 }
 
-func calcuteTaxesByAmount(msgs []sdk.Msg) sdk.Coins {
+// taxable coins type
+type Taxable interface {
+	GetTaxBasis() sdk.Coins  // calcuate tax basis of message
+}
+
+func calcuteTaxesByAmount(ctx sdk.Context, msgs []sdk.Msg, tk tax.Keeper) sdk.Coins {
 	taxes := ([]sdk.Coin)(nil)
-	terraTotal := sdk.ZeroInt()
 
 	for _, msg := range msgs {
-		if msgSend, ok := msg.(bank.MsgSend); ok {
-			for i := 0; i < len(msgSend.Inputs); i++ {
-				terraAmount := msgSend.Inputs[i].Coins.AmountOf("terra")
-				terraTotal.Add(terraAmount)
+		if taxable, ok := msg.(Taxable); ok {
+			basis := taxable.GetTaxBasis()
+
+			for _, coin := range basis {
+				rate := tk.GetTaxRate(ctx, coin.Denom)
+
+				if rate != sdk.ZeroDec() {
+					taxes = append(taxes, sdk.Coin{
+						Denom: coin.Denom,
+						Amount: rate.MulInt(coin.Amount).TruncateInt(),
+					})
+				}
 			}
 		}
 	}
 
-	taxes = append(taxes, sdk.Coin{
-		Denom: "terra", Amount: terraTotal.MulRaw(100).DivRaw(10),
-	})
 	return taxes
 }
 
@@ -296,7 +308,7 @@ func deductFees(acc Account, fee StdFee) (Account, sdk.Result) {
 	return acc, sdk.Result{}
 }
 
-func ensureSufficientMempoolFees(ctx sdk.Context, stdTx StdTx) sdk.Result {
+func ensureSufficientMempoolFees(ctx sdk.Context, stdTx StdTx, tk tax.Keeper) sdk.Result {
 	// currently we use a very primitive gas pricing model with a constant gasPrice.
 	// adjustFeesByGas handles calculating the amount of fees required based on the provided gas.
 	// TODO: Make the gasPrice not a constant, and account for tx size.
@@ -309,7 +321,7 @@ func ensureSufficientMempoolFees(ctx sdk.Context, stdTx StdTx) sdk.Result {
 			"insufficient fee, got: %q required: %q", stdTx.Fee.Amount, requiredFees)).Result()
 	}
 
-	requiredTaxes := calcuteTaxesByAmount(stdTx.Msgs)
+	requiredTaxes := calcuteTaxesByAmount(ctx, stdTx.Msgs, tk)
 	if !stdTx.Fee.Amount.IsAllGTE(requiredTaxes) {
 		// validators reject any tx from the mempool with less than the minimum fee per gas * gas factor
 		return sdk.ErrInsufficientFee(fmt.Sprintf(

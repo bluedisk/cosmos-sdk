@@ -76,8 +76,8 @@ func runConfigCmd(cmd *cobra.Command, args []string) error {
 }
 
 func handleGaiaCLIHome(dir string, stdin *bufio.Reader) (string, error) {
-	dirName := ".gaiacli"
-	home, err := GetString(fmt.Sprintf("Where is your gaiacli home directory? (Default: ~/%s)", dirName), stdin)
+	dirName := ".terracli"
+	home, err := GetString(fmt.Sprintf("Where is your terracli home directory? (Default: ~/%s)", dirName), stdin)
 	if err != nil {
 		return "", err
 	}

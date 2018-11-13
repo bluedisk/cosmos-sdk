@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	denom = "steak"
+	denom = "luna"
 )
 
 // SimulateSubmittingVotingAndSlashingForProposal simulates creating a msg Submit Proposal

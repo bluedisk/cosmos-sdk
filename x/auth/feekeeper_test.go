@@ -19,7 +19,7 @@ var (
 )
 
 func TestFeeCollectionKeeperGetSet(t *testing.T) {
-	ms, _, capKey2 := setupMultiStore()
+	ms, _, capKey2, _ := setupMultiStore()
 	cdc := codec.New()
 
 	// make context and keeper
@@ -38,7 +38,7 @@ func TestFeeCollectionKeeperGetSet(t *testing.T) {
 }
 
 func TestFeeCollectionKeeperAdd(t *testing.T) {
-	ms, _, capKey2 := setupMultiStore()
+	ms, _, capKey2, _ := setupMultiStore()
 	cdc := codec.New()
 
 	// make context and keeper
@@ -58,7 +58,7 @@ func TestFeeCollectionKeeperAdd(t *testing.T) {
 }
 
 func TestFeeCollectionKeeperClear(t *testing.T) {
-	ms, _, capKey2 := setupMultiStore()
+	ms, _, capKey2, _ := setupMultiStore()
 	cdc := codec.New()
 
 	// make context and keeper

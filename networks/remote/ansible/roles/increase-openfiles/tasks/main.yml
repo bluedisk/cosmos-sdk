@@ -18,5 +18,5 @@
   notify: reload systemctl
   with_items:
     - gaiad
-    - gaiacli
+    - terracli
 

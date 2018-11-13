@@ -18,6 +18,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/stake"
+	"github.com/cosmos/cosmos-sdk/x/tax"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
@@ -56,6 +57,9 @@ type GaiaApp struct {
 	keyParams        *sdk.KVStoreKey
 	tkeyParams       *sdk.TransientStoreKey
 
+	// for tax
+	keyTaxRate       *sdk.KVStoreKey
+
 	// Manage getting and setting accounts
 	accountKeeper       auth.AccountKeeper
 	feeCollectionKeeper auth.FeeCollectionKeeper
@@ -66,6 +70,7 @@ type GaiaApp struct {
 	distrKeeper         distr.Keeper
 	govKeeper           gov.Keeper
 	paramsKeeper        params.Keeper
+	taxKeeper			tax.Keeper
 }
 
 // NewGaiaApp returns a reference to an initialized GaiaApp.
@@ -90,6 +95,7 @@ func NewGaiaApp(logger log.Logger, db dbm.DB, traceStore io.Writer, baseAppOptio
 		keyFeeCollection: sdk.NewKVStoreKey("fee"),
 		keyParams:        sdk.NewKVStoreKey("params"),
 		tkeyParams:       sdk.NewTransientStoreKey("transient_params"),
+		keyTaxRate:		  sdk.NewKVStoreKey("tax_rate"),
 	}
 
 	// define the accountKeeper
@@ -138,6 +144,10 @@ func NewGaiaApp(logger log.Logger, db dbm.DB, traceStore io.Writer, baseAppOptio
 		app.paramsKeeper, app.paramsKeeper.Subspace(gov.DefaultParamspace), app.bankKeeper, &stakeKeeper,
 		app.RegisterCodespace(gov.DefaultCodespace),
 	)
+	app.taxKeeper = tax.NewTaxKeeper(
+		app.cdc,
+		app.keyTaxRate,
+	)
 
 	// register the staking hooks
 	// NOTE: stakeKeeper above are passed by reference,
@@ -162,7 +172,7 @@ func NewGaiaApp(logger log.Logger, db dbm.DB, traceStore io.Writer, baseAppOptio
 		app.keySlashing, app.keyGov, app.keyFeeCollection, app.keyParams)
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
-	app.SetAnteHandler(auth.NewAnteHandler(app.accountKeeper, app.feeCollectionKeeper))
+	app.SetAnteHandler(auth.NewAnteHandler(app.accountKeeper, app.feeCollectionKeeper, app.taxKeeper))
 	app.MountStoresTransient(app.tkeyParams, app.tkeyStake, app.tkeyDistr)
 	app.SetEndBlocker(app.EndBlocker)
 
@@ -251,6 +261,7 @@ func (app *GaiaApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci
 	gov.InitGenesis(ctx, app.govKeeper, genesisState.GovData)
 	mint.InitGenesis(ctx, app.mintKeeper, genesisState.MintData)
 	distr.InitGenesis(ctx, app.distrKeeper, genesisState.DistrData)
+	tax.InitGenesis(ctx, app.taxKeeper, genesisState.TaxData)
 	err = GaiaValidateGenesisState(genesisState)
 	if err != nil {
 		panic(err) // TODO find a way to do this w/o panics
@@ -313,6 +324,7 @@ func (app *GaiaApp) ExportAppStateAndValidators() (appState json.RawMessage, val
 		distr.ExportGenesis(ctx, app.distrKeeper),
 		gov.ExportGenesis(ctx, app.govKeeper),
 		slashing.ExportGenesis(ctx, app.slashingKeeper),
+		tax.ExportGenesis(ctx, app.taxKeeper),
 	)
 	appState, err = codec.MarshalJSONIndent(app.cdc, genState)
 	if err != nil {

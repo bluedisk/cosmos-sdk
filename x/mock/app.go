@@ -2,6 +2,7 @@ package mock
 
 import (
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/x/tax"
 	"math/rand"
 	"os"
 
@@ -31,6 +32,7 @@ type App struct {
 	// TODO: Abstract this out from not needing to be auth specifically
 	AccountKeeper       auth.AccountKeeper
 	FeeCollectionKeeper auth.FeeCollectionKeeper
+	TaxKeeper 			tax.Keeper
 
 	GenesisAccounts  []auth.Account
 	TotalCoinsSupply sdk.Coins
@@ -67,7 +69,7 @@ func NewApp() *App {
 	// Initialize the app. The chainers and blockers can be overwritten before
 	// calling complete setup.
 	app.SetInitChainer(app.InitChainer)
-	app.SetAnteHandler(auth.NewAnteHandler(app.AccountKeeper, app.FeeCollectionKeeper))
+	app.SetAnteHandler(auth.NewAnteHandler(app.AccountKeeper, app.FeeCollectionKeeper, app.TaxKeeper))
 
 	// Not sealing for custom extension
 
